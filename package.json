@@ -1,0 +1,42 @@
+{
+  "name": "ee-slack-bot",
+  "description": "Node slack bot for monitoring slack channel and doing neat stuff.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/eventespresso/eebot-slack-rtm",
+  "author": {
+    "name": "Darren Ethier",
+    "email": "darren@roughsmootheng.in",
+    "url": "http://roughsmootheng.in"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:eventespresso/eebot-slack-rtm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eventespresso/eebot-slack-rtm"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/eventespresso/eebot-slack-rtm/blob/master/LICENSE-MIT"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "dependencies": {
+    "jethro": "^1.2.11",
+    "lodash": "^3.7.0",
+    "node-codebase": "^1.0.0",
+    "shelljs": "^0.4.0",
+    "slack-api": "^0.1.11",
+    "slackbotapi": "^1.0.4"
+  },
+  "devDependencies": {},
+  "peerDependencies": {},
+  "keywords": [
+    "slack",
+    "codebasehq",
+    "slackrtm"
+  ]
+}
