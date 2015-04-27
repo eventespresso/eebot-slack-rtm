@@ -211,8 +211,8 @@ var ChatWithBot = function ( data ) {
                             "*Here's some info on the eebot ticket service*",
                             "• Type `#123` where the number is the ticket you want to show",
                             "• The default project tickets are pulled from is the `event-espresso` project. (Type `#123-eecore` anywhere to explicitly get tickets from that project)",
-                            "• Ticket numbers typed in the #eventsmart channel are from the `saas` project (Type `#123-saas` anywhere else to explicitly get tickets from the saas project)",
-                            "• Ticket numbers typed in the #infrastructure channel are from the `website` project (Type `#123-website` anywhere to explicitly get tickets from that project)",
+                            "• Ticket numbers typed in the #eventsmart channel are from the `saas` project (Type `#123-eesaas` anywhere else to explicitly get tickets from the saas project)",
+                            "• Ticket numbers typed in the #infrastructure channel are from the `website` project (Type `#123-web` anywhere to explicitly get tickets from that project)",
                             "• You can grab multiple tickets at once by having multiple ticket numbers in your chat message."
                         ]
                         slackBot.sendPM( data.user, commands.join("\n") );
