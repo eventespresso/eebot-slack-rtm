@@ -38,21 +38,18 @@ var TicketInfoToPost = function( data ) {
         ticketProjectRef = '',
         ticketNum = '',
         channelProject = '';
+
+    /**
+     * If there are not tickets.
+     * If the channel Id does not begin with "C" (Which is actual channel),
+     * then abort.
+     */
+
     if ( ! tickets ) {
         return;
     }
     tickets.forEach( function(ticket){
-        /**
-         * parse ticket for possible reference
-         * infer project to grab ticket details from
-         * channel or explicit reference
-         * setup ticketQuery(ies) to send in an array and then loop through
-         * and get ticket details via codebase api.
-         * generate attachment (for each ticket) for posting to slack and
-         * send.
-         * touch codebase tickets with link to related message triggering
-         * that ticket.
-         */
+        //parse ticket info for setting up messages
         regex = /[#0-9-]/g;
         ticketProjectRef = ticket.replace(regex, '');
 
@@ -170,7 +167,7 @@ var ChatWithBot = function ( data ) {
 
     switch ( command[0].toLowerCase() ) {
         case "hello" :
-            slackBot.sendMsg( data.channel, "Oh, hello @" + slackBot.getUser(data.user).name+" !" );
+            slackBot.sendPM( data.user, "Oh, hello @" + slackBot.getUser(data.user).name+" !" );
             break;
 
         case "help" :
@@ -196,7 +193,6 @@ var ChatWithBot = function ( data ) {
                         ]
                         slackBot.sendPM( data.user, commands.join("\n") );
                         break;
-
                 }
             }
             break;
@@ -214,10 +210,9 @@ slackBot.on('message', function(data) {
 
     // if the "#[0-9]" is found anywhere in the message look up the ticket.
     TicketInfoToPost( data );
-    //if pm with eebot, let's run pm commands
-    if ( data.channel == creds.slack.botId ) {
-        ChatWithBot( data );
-    }
+
+    //possible chatting with bot?
+    ChatWithBot( data );
 
 	// If the first character starts with /, you can change this to your own prefix of course.
 	if(data.text.charAt(0) === '%') {
