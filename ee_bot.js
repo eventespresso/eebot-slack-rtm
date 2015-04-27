@@ -99,11 +99,8 @@ var getAndPostTickets = function( ticketQuery, data ) {
         } else {
             channelInfo = slcdata;
             //loop through ticketQuery and retrieve, then post info related to each ticket
-            console.log(ticketQuery);
             cb = new Codebase( creds.codebaseMap.baseEndpoint, creds.codebaseMap.users.eebot.cbAuth.events );
             _.each( ticketQuery, function( queryString, n) {
-                console.log(n);
-                console.log( queryString );
                 cb.tickets.allQuery( queryString.project, { query : queryString.query }, function( cberr, cbdata ) {
                     if ( cberr ) {
                         console.log( 'Error:' );
@@ -146,7 +143,6 @@ var getAndPostTickets = function( ticketQuery, data ) {
                             });
 
                             slattachments = JSON.stringify( slattachments );
-                            console.log( slattachments );
                             //send message to slack
                             slack.chat.postMessage( { token : creds.slack.authToken, text : "", channel : data.channel, attachments : slattachments, as_user : true }, function( slcherr, slchdata ) {
                                 if ( slcherr ) {
@@ -178,8 +174,8 @@ slackBot.on('message', function(data) {
     // if the "#[0-9]" is found anywhere in the message look up the ticket.
     TicketInfoToPost( data );
 
-	// If the first character starts with %, you can change this to your own prefix of course.
-	if(data.text.charAt(0) === '%') {
+	// If the first character starts with /, you can change this to your own prefix of course.
+	if(data.text.charAt(0) === '/') {
 		// Split the command and it's arguments into an array
 		var command = data.text.substring(1).split(' ');
 
@@ -193,19 +189,31 @@ slackBot.on('message', function(data) {
 		// Switch to check which command has been requested.
 		switch (command[0].toLowerCase()) {
 			// If hello
-			case "hello":
+			/*case "hello":
 				// Send message.
 				slackBot.sendMsg(data.channel, "Oh, hello @"+slackBot.getUser(data.user).name+" !")
-			break;
+			break;/**/
 
-			case "hue":
+			/**case "hue":
 				slackBot.sendMsg(data.channel, "@"+slackBot.getUser(data.user).name+" brbrbrbrbrb!")
-			break;
+			break;/**/
 
 			case "say":
-				var say = data.text.split('%say ');
+				var say = data.text.split('/say ');
 				slackBot.sendMsg(data.channel, say[1]);
 			break;
+
+            case "tickethelp":
+                var commands = [
+                    "*Info on the eebot ticket service*",
+                    "• Type `#123` where the number is the ticket you want to show",
+                    "• The default project tickets are pulled from is the `event-espresso` project. (Type `#123-eecore` anywhere to explicitly get tickets from that project)",
+                    "• Ticket numbers typed in the #eventsmart channel are from the `saas` project (Type `#123-saas` anywhere else to explicitly get tickets from the saas project)",
+                    "• Ticket numbers typed in the #infrastructure channel are from the `website` project (Type `#123-website` anywhere to explicitly get tickets from that project)",
+                    "• You can grab multiple tickets at once by having multiple ticket numbers in your chat message."
+                ]
+                slackBot.sendPM( data.user, command.join("\n") );
+                break;
 
             //testing codebase
             case "cbtest":
