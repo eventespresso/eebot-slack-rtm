@@ -180,6 +180,7 @@ var ChatWithBot = function ( data ) {
                     "*I'm here to serve!* Here's some commands I know that I can give more information on, just type `help` followed by the item in the list below.",
                     "• `tickets` - _more info on how ticket stuff works_"
                 ]
+                slackBot.sendMsg( data.channel, helpcommands.join("\n") );
             } else {
                 switch ( command[1].toLowerCase() ) {
 
@@ -193,12 +194,11 @@ var ChatWithBot = function ( data ) {
                             "• Ticket numbers typed in the #infrastructure channel are from the `website` project (Type `#123-website` anywhere to explicitly get tickets from that project)",
                             "• You can grab multiple tickets at once by having multiple ticket numbers in your chat message."
                         ]
-                        slackBot.sendPM( data.user, command.join("\n") );
+                        slackBot.sendPM( data.user, commands.join("\n") );
                         break;
 
                 }
             }
-            slackBot.sendMsg( data.channel, helpcommands.join("\n") );
             break;
 
     }
