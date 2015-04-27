@@ -132,7 +132,7 @@ var getAndPostTickets = function( ticketQuery, data ) {
                                             "short" : true
                                         }
                                     ],
-                                    "markdwn_in" : ["text","pretext"]
+                                    "mrkdwn_in" : ["text","pretext"]
                                 });
 
                                 //touch ticket in codebase
