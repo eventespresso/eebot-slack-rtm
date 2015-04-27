@@ -76,6 +76,10 @@ var TicketInfoToPost = function( data ) {
         regex = /[#a-z-]/g;
         ticketNum = ticket.replace(regex, '');
 
+        if ( ! ticketNum ) {
+            return;
+        }
+
         //inferred channel project
         channelProject = typeof creds.codebaseMap.channels[data.channel] !== 'undefined' && isChannel ? creds.codebaseMap.channels[data.channel].projectSlug : creds.codebaseMap.channels.default.projectSlug;
 
@@ -155,7 +159,7 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
 
                         //touch ticket in codebase IF a channel or group but not for DM
                         //or is not a restricted channel.
-                        if ( ( isChannel || isGroup ) && ( data.channel != 'C04JV1HFK') ) {
+                        if ( ( isChannel || isGroup ) && ( data.channel != 'C04JV1HFK') && ( data.channel != '') ) {
                             codebaseMessage = "![enter image description here][1] This ticket was [talked about in Slack][2] \n\n " + data.text + "\n\n [1]: https://events.codebasehq.com/upload/71d24d9a-22da-4a45-1cb4-4da98d6b0974/show/original \n\n[2]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
                             cb.tickets.notes.create(queryString.project, {
                                 ticket_id: ticket.ticketId[0]._,
