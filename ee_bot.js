@@ -254,7 +254,7 @@ slackBot.on('message', function(data) {
 		switch (command[0].toLowerCase()) {
 
 			case "say":
-				var say = data.text.split('/say ');
+				var say = data.text.split('%say ');
 				slackBot.sendMsg(data.channel, say[1]);
 			break;
 
