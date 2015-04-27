@@ -197,7 +197,8 @@ slackBot.on('message', function(data) {
 
     // if the "#[0-9]" is found anywhere in the message look up the ticket.
     TicketInfoToPost( data );
-
+    console.log( data.channel );
+    console.log( creds.slack.botID );
     //if pm with eebot, let's run pm commands
     if ( data.channel == creds.slack.botId ) {
         ChatWithBot( data );
