@@ -117,7 +117,7 @@ var getAndPostTickets = function( ticketQuery, data ) {
                                 slattachments.push({
                                     "fallback" : "Ticket " + ticket.ticketId[0]._ + ': ' + ticket.summary[0],
                                     "color" : creds.codebaseMap.colors[ticket.ticketType[0]] ? creds.codebaseMap.colors[ticket.ticketType[0]] : creds.codebaseMap.colors.default,
-                                    "title" : "Ticket: " + ticket.ticketId[0]._ + " (" + ")",
+                                    "title" : "Ticket: " + ticket.ticketId[0]._ + " (" + ticket.milestone[0].name + ")",
                                     "title_link" : creds.codebaseMap.projects[queryString.projectRef].url + '/tickets/' + ticket.ticketId[0]._,
                                     "text" : "*Ticket Type:* _" + ticket.ticketType[0] + "_ \n" + ticket.summary[0],
                                     "fields" : [
