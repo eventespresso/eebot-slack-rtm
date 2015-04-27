@@ -56,8 +56,8 @@ var TicketInfoToPost = function( data ) {
         channelType = data.channel.charAt(0),
         channelProject = '';
 
-    //no tickets? get out.
-    if ( ! tickets ) {
+    //no tickets? Codebase is the username? get out.
+    if ( ! tickets || (data.username && data.username == 'Codebase' ) ) {
         return;
     }
 
