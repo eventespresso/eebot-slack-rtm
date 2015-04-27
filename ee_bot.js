@@ -177,7 +177,7 @@ var ChatWithBot = function ( data ) {
                     "*I'm here to serve!* Here's some commands I know that I can give more information on, just type `help` followed by the item in the list below.",
                     "• `tickets` - _more info on how ticket stuff works_"
                 ]
-                slackBot.sendMsg( data.channel, helpcommands.join("\n") );
+                slackBot.sendPM( data.user, helpcommands.join("\n") );
             } else {
                 switch ( command[1].toLowerCase() ) {
 
