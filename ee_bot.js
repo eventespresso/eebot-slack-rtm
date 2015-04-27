@@ -221,7 +221,7 @@ slackBot.on('message', function(data) {
                     console.log( cbdata.tickets.ticket[0].status );
                     console.log( cbdata.tickets.ticket[0].priority );
                     console.log( cbdata.tickets.ticket[0].ticketId);
-                    console.log( cbdata.tickets.tickt[0].milestone );
+                    console.log( cbdata.tickets.ticket[0].milestone );
                     console.log( cbdata.tickets.ticket );
                     console.log(cbdata);
                 });
