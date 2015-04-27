@@ -22,6 +22,20 @@ var outputLog = function(obj) {
     }
 }
 
+
+//add method that grabs group name that slackBot doesn't have
+getGroup = function( term ) {
+    for ( var i in slackBot.data.groups ) {
+        if(slackBot.data.groups[i]['name'] === term) var group = slackBot.data.groups[i];
+    }
+    if(typeof group == 'undefined') {
+        for(var i in slackBot.data.groups) {
+            if(slackBot.data.groups[i]['id'] === term) var group = slackBot.data.groups[i];
+        }
+    }
+    return group;
+}
+
 //process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 
@@ -37,17 +51,22 @@ var TicketInfoToPost = function( data ) {
         ticketProject = '',
         ticketProjectRef = '',
         ticketNum = '',
+        isChannel = true,
+        isGroup = false,
+        channelType = data.channel.charAt(0),
         channelProject = '';
 
-    /**
-     * If there are not tickets.
-     * If the channel Id does not begin with "C" (Which is actual channel),
-     * then abort.
-     */
-
+    //no tickets? get out.
     if ( ! tickets ) {
         return;
     }
+
+    //if channelID does not begin with "C" then it's not a channel
+    if ( channelType != 'C' ) {
+        isChannel = false;
+        isGroup = channelType == 'G' ? true : false;
+    }
+
     tickets.forEach( function(ticket){
         //parse ticket info for setting up messages
         regex = /[#0-9-]/g;
@@ -58,12 +77,13 @@ var TicketInfoToPost = function( data ) {
         ticketNum = ticket.replace(regex, '');
 
         //inferred channel project
-        channelProject = typeof creds.codebaseMap.channels[data.channel] !== 'undefined' ? creds.codebaseMap.channels[data.channel].projectSlug : creds.codebaseMap.channels.default.projectSlug;
+        channelProject = typeof creds.codebaseMap.channels[data.channel] !== 'undefined' && isChannel ? creds.codebaseMap.channels[data.channel].projectSlug : creds.codebaseMap.channels.default.projectSlug;
 
         //if we have a project inferred from ticket use it, otherwise infer
         //from channel.
-        ticketProject = ticketProjectRef !== '' ? creds.codebaseMap.projects[ticketProjectRef].projectSlug : channelProject;
         ticketProjectRef = ticketProjectRef === '' ? 'eecore' : ticketProjectRef;
+        ticketProjectRef = ! creds.codebaseMap.projects[ticketProjectRef] ? 'eecore' : ticketProjectRef;
+        ticketProject = ticketProjectRef !== '' ? creds.codebaseMap.projects[ticketProjectRef].projectSlug : channelProject;
 
         //ticketQuery
         if ( typeof ticketQuery[ticketProject] !== 'undefined' ) {
@@ -77,87 +97,91 @@ var TicketInfoToPost = function( data ) {
     });
     if ( ticketQuery ) {
         //send ticketQuery for retrieving from codebase and posting to slack
-        getAndPostTickets(ticketQuery, data);
+        getAndPostTickets(ticketQuery, data, isChannel, isGroup );
     }
 };
 
 
-var getAndPostTickets = function( ticketQuery, data ) {
+var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
     var cb = {},
         slattachments = [],
         codebaseMessage = '',
-        channelInfo = {};
+        channelName = '';
 
-    //channel info
-    slack.channel.info( { "token" : creds.slack.authToken, "channel" : data.channel }, function( slerr, slcdata ) {
-        if ( slerr ) {
-            console.log( 'Channel Info Error:' );
-            console.log( slcdata );
-        } else {
-            channelInfo = slcdata;
-            //loop through ticketQuery and retrieve, then post info related to each ticket
-            cb = new Codebase( creds.codebaseMap.baseEndpoint, creds.codebaseMap.users.eebot.cbAuth.events );
-            _.each( ticketQuery, function( queryString, n) {
-                cb.tickets.allQuery( queryString.project, { query : queryString.query }, function( cberr, cbdata ) {
-                    if ( cberr ) {
-                        console.log( 'Error:' );
-                        console.log( cbdata );
-                        return;
-                    } else {
-                        //all went well so let's loop through the tickets and grab
-                        //the details:
-                        if ( cbdata.tickets ) {
-                            cbdata.tickets.ticket.forEach( function( ticket ) {
-                                slattachments.push({
-                                    "fallback" : "Ticket " + ticket.ticketId[0]._ + ': ' + ticket.summary[0],
-                                    "color" : creds.codebaseMap.colors[ticket.ticketType[0]] ? creds.codebaseMap.colors[ticket.ticketType[0]] : creds.codebaseMap.colors.default,
-                                    "title" : "Ticket: " + ticket.ticketId[0]._ + " (" + ticket.milestone[0].name[0] + ")",
-                                    "title_link" : creds.codebaseMap.projects[queryString.projectRef].url + '/tickets/' + ticket.ticketId[0]._,
-                                    "text" : "*Ticket Type:* _" + ticket.ticketType[0] + "_ \n" + ticket.summary[0],
-                                    "fields" : [
-                                        {
-                                            "title" : "Priority",
-                                            "value" : ticket.priority[0].name[0],
-                                            "short" : true
-                                        },
-                                        {
-                                            "title" : "Status",
-                                            "value" : ticket.status[0].name[0],
-                                            "short" : true
-                                        }
-                                    ],
-                                    "mrkdwn_in" : ["text","pretext"]
-                                });
+    if ( isChannel ) {
+        channelName = slackBot.getChannel(data.channel).name;
+    } else if ( isGroup ) {
+        channelName = getGroup(data.channel).name;
+    } else {
+        channelName = data.channel;
+    }
 
-                                //touch ticket in codebase
-                                codebaseMessage = "![enter image description here][1] This ticket was [talked about in Slack][2] \n\n " + data.text + "\n\n [1]: https://events.codebasehq.com/upload/71d24d9a-22da-4a45-1cb4-4da98d6b0974/show/original \n\n[2]: " + creds.slack.archivesEndpoint + channelInfo.channel.name + '/p' + data.ts.replace('.', '');
-                                cb.tickets.notes.create( queryString.project, { ticket_id : ticket.ticketId[0]._, content : codebaseMessage }, function( cbterr, cbtdata ) {
-                                    if ( cbterr ) {
-                                        console.log( 'Codebase ticket update error: ' );
-                                        console.log( cbtdata );
-                                    }
-                                });
-                            });
+    //loop through ticketQuery and retrieve, then post info related to each ticket
+    cb = new Codebase( creds.codebaseMap.baseEndpoint, creds.codebaseMap.users.eebot.cbAuth.events );
+    _.each( ticketQuery, function( queryString, n) {
+        cb.tickets.allQuery( queryString.project, { query : queryString.query }, function( cberr, cbdata ) {
+            if ( cberr ) {
+                console.log( 'Error:' );
+                console.log( cbdata );
+                return;
+            } else {
+                //all went well so let's loop through the tickets and grab
+                //the details:
+                if ( cbdata.tickets ) {
+                    cbdata.tickets.ticket.forEach( function( ticket ) {
+                        if ( ! ticket.ticketId[0] ) {
+                            return;
+                        }
+                        slattachments.push({
+                            "fallback" : "Ticket " + ticket.ticketId[0]._ + ': ' + ticket.summary[0],
+                            "color" : creds.codebaseMap.colors[ticket.ticketType[0]] ? creds.codebaseMap.colors[ticket.ticketType[0]] : creds.codebaseMap.colors.default,
+                            "title" : "Ticket: " + ticket.ticketId[0]._ + " (" + ticket.milestone[0].name[0] + ")",
+                            "title_link" : creds.codebaseMap.projects[queryString.projectRef].url + '/tickets/' + ticket.ticketId[0]._,
+                            "text" : "*Ticket Type:* _" + ticket.ticketType[0] + "_ \n" + ticket.summary[0],
+                            "fields" : [
+                                {
+                                    "title" : "Priority",
+                                    "value" : ticket.priority[0].name[0],
+                                    "short" : true
+                                },
+                                {
+                                    "title" : "Status",
+                                    "value" : ticket.status[0].name[0],
+                                    "short" : true
+                                }
+                            ],
+                            "mrkdwn_in" : ["text","pretext"]
+                        });
 
-                            slattachments = JSON.stringify( slattachments );
-                            //send message to slack
-                            slack.chat.postMessage( { token : creds.slack.authToken, text : "", channel : data.channel, attachments : slattachments, as_user : true }, function( slcherr, slchdata ) {
-                                if ( slcherr ) {
-                                    console.log(slchdata);
-                                } else {
-                                    outputLog({severity: 'info', source: 'getAndPostTickets', message: 'Sent ticket info to slack', timestamp: new Date(), location: os.hostname() } );
+                        //touch ticket in codebase IF a channel or group but not for DM
+                        if ( isChannel || isGroup ) {
+                            codebaseMessage = "![enter image description here][1] This ticket was [talked about in Slack][2] \n\n " + data.text + "\n\n [1]: https://events.codebasehq.com/upload/71d24d9a-22da-4a45-1cb4-4da98d6b0974/show/original \n\n[2]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
+                            cb.tickets.notes.create(queryString.project, {
+                                ticket_id: ticket.ticketId[0]._,
+                                content: codebaseMessage
+                            }, function (cbterr, cbtdata) {
+                                if (cbterr) {
+                                    console.log('Codebase ticket update error: ');
+                                    console.log(cbtdata);
                                 }
                             });
-
                         }
-                    }
-                });
+                    });
 
-            });
-        }
+                    slattachments = JSON.stringify( slattachments );
+                    //send message to slack
+                    slack.chat.postMessage( { token : creds.slack.authToken, text : "", channel : data.channel, attachments : slattachments, as_user : true }, function( slcherr, slchdata ) {
+                        if ( slcherr ) {
+                            console.log(slchdata);
+                        } else {
+                            outputLog({severity: 'info', source: 'getAndPostTickets', message: 'Sent ticket info to slack', timestamp: new Date(), location: os.hostname() } );
+                        }
+                    });
+
+                }
+            }
+        });
     });
-
-
 }
 
 
