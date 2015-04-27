@@ -180,6 +180,23 @@ var ChatWithBot = function ( data ) {
                     "*I'm here to serve!* Here's some commands I know that I can give more information on, just type `help` followed by the item in the list below.",
                     "• `tickets` - _more info on how ticket stuff works_"
                 ]
+            } else {
+                switch ( command[1].toLowerCase() ) {
+
+                    case "ticket":
+                    case "tickets":
+                        var commands = [
+                            "*Here's some info on the eebot ticket service*",
+                            "• Type `#123` where the number is the ticket you want to show",
+                            "• The default project tickets are pulled from is the `event-espresso` project. (Type `#123-eecore` anywhere to explicitly get tickets from that project)",
+                            "• Ticket numbers typed in the #eventsmart channel are from the `saas` project (Type `#123-saas` anywhere else to explicitly get tickets from the saas project)",
+                            "• Ticket numbers typed in the #infrastructure channel are from the `website` project (Type `#123-website` anywhere to explicitly get tickets from that project)",
+                            "• You can grab multiple tickets at once by having multiple ticket numbers in your chat message."
+                        ]
+                        slackBot.sendPM( data.user, command.join("\n") );
+                        break;
+
+                }
             }
             slackBot.sendMsg( data.channel, helpcommands.join("\n") );
             break;
@@ -197,8 +214,6 @@ slackBot.on('message', function(data) {
 
     // if the "#[0-9]" is found anywhere in the message look up the ticket.
     TicketInfoToPost( data );
-    console.log( data.channel );
-    console.log( creds.slack.botID );
     //if pm with eebot, let's run pm commands
     if ( data.channel == creds.slack.botId ) {
         ChatWithBot( data );
