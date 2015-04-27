@@ -228,7 +228,7 @@ var ChatWithBot = function ( data ) {
 // Slack on EVENT message, send data.
 slackBot.on('message', function(data) {
 	// If no text, return.
-	if(typeof data.text == 'undefined') return;
+	if(typeof data.text === 'undefined') return;
 
 	// If someone says 'cake!!' respond to their message with "@user OOH, CAKE!! :cake"
 	if(data.text === 'cake!!') slackBot.sendMsg(data.channel, "@"+slackBot.getUser(data.user).name+" OOH, CAKE!! :cake:");
