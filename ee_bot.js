@@ -84,11 +84,11 @@ var TicketInfoToPost = function( data ) {
         channelProject = typeof creds.codebaseMap.channels[data.channel] !== 'undefined' && isChannel ? creds.codebaseMap.channels[data.channel].projectSlug : creds.codebaseMap.channels.default.projectSlug;
         //if we have a project inferred from ticket use it, otherwise infer
         //from channel.
-        console.log(ticketProjectRef);
-        ticketProjectRef = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? ticketProjectRef : creds.codebaseMap.channels.default.projectRef;
+
+        ticketProjectRef = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? ticketProjectRef : '';
+        ticketProjectRef = ticketProjectRef === '' && creds.codebaseMap.channels[data.channel] ? creds.codebaseMap.channels[data.channel].projectRef : creds.codebaseMap.channels.default.projectRef;
         ticketProject = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? creds.codebaseMap.projects[ticketProjectRef].projectSlug : channelProject;
 
-        console.log( ticketProjectRef );
         //ticketQuery
         if ( typeof ticketQuery[ticketProject] !== 'undefined' ) {
             ticketQuery[ticketProject].query += ',' + ticketNum;
