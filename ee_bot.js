@@ -85,9 +85,9 @@ var TicketInfoToPost = function( data ) {
 
         //if we have a project inferred from ticket use it, otherwise infer
         //from channel.
-        ticketProject = ticketProjectRef !== '' ? creds.codebaseMap.projects[ticketProjectRef].projectSlug : channelProject;
+        ticketProject = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? creds.codebaseMap.projects[ticketProjectRef].projectSlug : channelProject;
 
-        ticketProjectRef = ticketProjectRef === '' || ! creds.codebaseMap.projects[ticketProjectRef] ? 'eecore' : ticketProjectRef;
+        ticketProjectRef = ticketProjectRef === '' || ! creds.codebaseMap.projects[ticketProjectRef] ? creds.codebaseMap.channels.default.projectRef : ticketProjectRef;
 
         //ticketQuery
         if ( typeof ticketQuery[ticketProject] !== 'undefined' ) {
