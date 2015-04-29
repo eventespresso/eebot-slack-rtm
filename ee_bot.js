@@ -157,9 +157,11 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
                             "mrkdwn_in" : ["text","pretext"]
                         });
 
+                        var codeBaseUser = data.username && data.username == 'Codebase';
+
                         //touch ticket in codebase IF a channel or group but not for DM
                         //or is not a restricted channel and not if user is codebase itself
-                        if ( data.username && data.username != 'Codebase' ) {
+                        if ( ! codeBaseUser ) {
                             if (( isChannel || isGroup ) && ( data.channel != 'C04JV1HFK') && ( data.channel != 'G04J6FDDY') && ( data.channel != '')) {
                                 codebaseMessage = "![enter image description here][1] This ticket was [talked about in Slack][2] \n\n " + data.text + "\n\n [1]: https://events.codebasehq.com/upload/71d24d9a-22da-4a45-1cb4-4da98d6b0974/show/original \n\n[2]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
                                 cb.tickets.notes.create(queryString.project, {
