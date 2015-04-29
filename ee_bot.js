@@ -82,11 +82,13 @@ var TicketInfoToPost = function( data ) {
 
         //inferred channel project
         channelProject = typeof creds.codebaseMap.channels[data.channel] !== 'undefined' && isChannel ? creds.codebaseMap.channels[data.channel].projectSlug : creds.codebaseMap.channels.default.projectSlug;
-        ticketProjectRef = typeof creds.codebaseMap.channels[data.channel] !== 'undefined' && isChannel ? creds.codebaseMap.channels[data.channel].projectRef : creds.codebaseMap.channels.default.projectRef;
         //if we have a project inferred from ticket use it, otherwise infer
         //from channel.
+        console.log(ticketProjectRef);
+        ticketProjectRef = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? ticketProjectRef : creds.codebaseMap.channels.default.projectRef;
         ticketProject = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? creds.codebaseMap.projects[ticketProjectRef].projectSlug : channelProject;
 
+        console.log( ticketProjectRef );
         //ticketQuery
         if ( typeof ticketQuery[ticketProject] !== 'undefined' ) {
             ticketQuery[ticketProject].query += ',' + ticketNum;
@@ -157,7 +159,7 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
 
                         //touch ticket in codebase IF a channel or group but not for DM
                         //or is not a restricted channel.
-                        if ( ( isChannel || isGroup ) && ( data.channel != 'C04JV1HFK') && ( data.channel != '') ) {
+                        if ( ( isChannel || isGroup ) && ( data.channel != 'C04JV1HFK') && ( data.channel != 'G04J6FDDY') && ( data.channel != '') ) {
                             codebaseMessage = "![enter image description here][1] This ticket was [talked about in Slack][2] \n\n " + data.text + "\n\n [1]: https://events.codebasehq.com/upload/71d24d9a-22da-4a45-1cb4-4da98d6b0974/show/original \n\n[2]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
                             cb.tickets.notes.create(queryString.project, {
                                 ticket_id: ticket.ticketId[0]._,
