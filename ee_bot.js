@@ -255,7 +255,8 @@ var runGrunt = function( data ) {
 
 var ChatWithBot = function ( data ) {
     //match the first word in the chat to get the command
-    var command = data.text.split( ' ' );
+    var command = data.text.split( ' '),
+        commands = [];
 
     switch ( command[0].toLowerCase() ) {
         case "hello" :
@@ -267,7 +268,8 @@ var ChatWithBot = function ( data ) {
             if ( typeof command[1] === 'undefined' ) {
                 var helpcommands = [
                     "*I'm here to serve!* Here's some commands I know that I can give more information on, just type `help` followed by the item in the list below.",
-                    "• `tickets` - _more info on how ticket stuff works_"
+                    "• `tickets` - _more info on how ticket stuff works_",
+                    "• `grunt` - _more info on the grunt commands I can do_"
                 ]
                 slackBot.sendPM( data.user, helpcommands.join("\n") );
             } else {
@@ -275,14 +277,50 @@ var ChatWithBot = function ( data ) {
 
                     case "ticket":
                     case "tickets":
-                        var commands = [
+                        commands = [
                             "*Here's some info on the eebot ticket service*",
                             "• Type `#123` where the number is the ticket you want to show",
                             "• The default project tickets are pulled from is the `event-espresso` project. (Type `#123-eecore` anywhere to explicitly get tickets from that project)",
                             "• Ticket numbers typed in the #eventsmart channel are from the `saas` project (Type `#123-eesaas` anywhere else to explicitly get tickets from the saas project)",
                             "• Ticket numbers typed in the #infrastructure channel are from the `website` project (Type `#123-web` anywhere to explicitly get tickets from that project)",
                             "• You can grab multiple tickets at once by having multiple ticket numbers in your chat message."
-                        ]
+                        ];
+                        slackBot.sendPM( data.user, commands.join("\n") );
+                        break;
+                    case "grunt" :
+                        if ( command[2] ) {
+                            if ( command[2].toLowerCase() == 'commands' ) {
+                                commands = [
+                                    "Here's the different commands you can use with `grunt`:"
+                                ];
+
+                                _.keys( creds.grunt.command).forEach( function(gc)  {
+                                    commands.push( "• *" + gc + "*: " + creds.grunt.command[gc].description );
+                                });
+
+                            } else if ( command[2].toLowerCase() == 'projects' ) {
+                                commands = [
+                                    "Here's the different project references you can use with `grunt`:"
+                                ];
+                                _.keys( creds.grunt.project).forEach( function(gp) {
+                                    if ( gp == 'rootpath' ) return;
+                                    commands.push( "• *" + gp + "*: _" + creds.grunt.project[gp].name + "_" );
+                                });
+                            } else {
+                                commands = [
+                                    "hmm... I dont' recognize that help text. Try again? Type `help grunt`."
+                                ]
+                            }
+                            slackBot.sendPM( data.user, commands.join("\n") );
+                            return;
+                            break;
+                        }
+                        commands = [
+                            "I can speak to my pal grunt to run tasks on your projects that we know about. The usual format for grunt commands is:",
+                            "*_grunt {command} {project} [other-options]_*\n",
+                            "For more info on the commands, type `help grunt commands`",
+                            "For more info on the projects, type `help grunt projects`"
+                        ];
                         slackBot.sendPM( data.user, commands.join("\n") );
                         break;
                 }
