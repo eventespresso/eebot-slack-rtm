@@ -8,6 +8,8 @@ var slackBotAPI = require('slackbotapi'),
     logger = require('jethro'),
     logging = true;
 
+require('shelljs/global');
+
 
 // Starting slackbot
 var slackBot = new slackBotAPI({
@@ -194,6 +196,63 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
 }
 
 
+var runGrunt = function( data ) {
+
+    var commands = _.keys( creds.grunt.command),
+        path = creds.grunt.project.rootpath,
+        gruntRun = "grunt ",
+        gruntCommand = data.text.split( ' ' );
+
+    //if not a grunt command exit.
+    if ( gruntCommand[0].toLowerCase() !== "grunt" ) {
+        return;
+    }
+
+    //verify that we have a valid command and if so execute.
+    if ( ! gruntCommand[1] ) {
+        slackBot.sendPM( data.user, "You typed grunt with no command. For a list of commands you can use with `grunt` type `help grunt commands`." );
+        return;
+    }
+
+    //verify the given command has a configuration setup.
+    if ( ! creds.grunt.command[gruntCommand[1]] ) {
+        slackBot.sendPM( data.user, "The grunt command you gave: `" + gruntCommand[1] + "` currently is not configured." );
+        return;
+    }
+
+    //verify there are the right number of params for the command.
+    if ( gruntCommand.length !== creds.grunt.command[gruntCommand[1]].params ) {
+        slackBot.sendPM( data.user, "I'm expecting " + creds.grunt.command[gruntCommand[1]].params + " parameters but you only gave *" + gruntCommand.length );
+        return;
+    }
+
+    //verify that the project command exists.
+    if ( ! gruntCommand[2] ) {
+        slackBot.sendPM( data.user, "You have not given the project to run the grunt command on. For a list of projects that are valid, type `help grunt projects`." );
+        return;
+    }
+
+    //verify that the given project exists.
+    if ( ! creds.grunt.project[gruntCommand[2]] ) {
+        slackBot.sendPM( data.user, "The project you gave to run grunt on is not valid." );
+        return;
+    }
+
+    //NOW we can go ahead and setup to execute grunt!
+    path += creds.grunt.project[gruntCommand[2]].slug;
+    gruntRun += creds.grunt.command[gruntCommand[1]].params === 4 ? gruntCommand[1] + ':' + gruntCommand[3] : gruntCommand[1];
+    cd( path );
+
+    exec( gruntRun );
+
+    //notify user
+    slackBot.sendPM( data.user,
+        "Okay I've run grunt on *" + creds.grunt.project[gruntCommand[2]].name + "* for you."
+    );
+
+}
+
+
 var ChatWithBot = function ( data ) {
     //match the first word in the chat to get the command
     var command = data.text.split( ' ' );
@@ -235,17 +294,24 @@ var ChatWithBot = function ( data ) {
 
 // Slack on EVENT message, send data.
 slackBot.on('message', function(data) {
+
 	// If no text, return.
 	if(typeof data.text === 'undefined') return;
 
 	// If someone says 'cake!!' respond to their message with "@user OOH, CAKE!! :cake"
 	if(data.text === 'cake!!') slackBot.sendMsg(data.channel, "@"+slackBot.getUser(data.user).name+" OOH, CAKE!! :cake:");
 
+    //split
+
+
     // if the "#[0-9]" is found anywhere in the message look up the ticket.
     TicketInfoToPost( data );
 
     //possible chatting with bot?
     ChatWithBot( data );
+
+    //possible Grunt command?
+    runGrunt( data );
 
 	// If the first character starts with /, you can change this to your own prefix of course.
 	if(data.text.charAt(0) === '%') {
