@@ -110,7 +110,6 @@ var TicketInfoToPost = function( data ) {
 
 var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
     var cb = {},
-        slattachments = [],
         codebaseMessage = '',
         channelName = '';
 
@@ -121,6 +120,8 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
     } else {
         channelName = data.channel;
     }
+
+    var codeBaseUser = data.username && data.username == 'Codebase';
 
     //loop through ticketQuery and retrieve, then post info related to each ticket
     cb = new Codebase( creds.codebaseMap.baseEndpoint, creds.codebaseMap.users.eebot.cbAuth.events );
@@ -138,34 +139,20 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
                         if ( ! ticket.ticketId[0] ) {
                             return;
                         }
-                        slattachments.push({
-                            "fallback" : "Ticket " + ticket.ticketId[0]._ + ': ' + ticket.summary[0],
-                            "color" : creds.codebaseMap.colors[ticket.ticketType[0]] ? creds.codebaseMap.colors[ticket.ticketType[0]] : creds.codebaseMap.colors.default,
-                            "title" : "Ticket: " + ticket.ticketId[0]._ + " (" + ticket.milestone[0].name[0] + ")",
-                            "title_link" : creds.codebaseMap.projects[queryString.projectRef].url + '/tickets/' + ticket.ticketId[0]._,
-                            "text" : "*Ticket Type:* _" + ticket.ticketType[0] + "_ \n" + ticket.summary[0],
-                            "fields" : [
-                                {
-                                    "title" : "Priority",
-                                    "value" : ticket.priority[0].name[0],
-                                    "short" : true
-                                },
-                                {
-                                    "title" : "Status",
-                                    "value" : ticket.status[0].name[0],
-                                    "short" : true
-                                }
-                            ],
-                            "mrkdwn_in" : ["text","pretext"]
-                        });
 
-                        var codeBaseUser = data.username && data.username == 'Codebase';
-
-                        //touch ticket in codebase IF a channel or group but not for DM
-                        //or is not a restricted channel and not if user is codebase itself
-                        if ( ! codeBaseUser ) {
+                        if ( codeBaseUser ) {
+                            //get details for first post in ticket
+                            cb.tickets.notes.all( queryString.project, ticket.ticketId[0]._, function( cbterr, cbtdata ) {
+                               if ( cbterr ) {
+                                   console.log('Codebase ticket update error: ');
+                                   console.log(cbtdata);
+                               } else {
+                                   sendSlackTicketNotification( ticket, queryString, channelName, data, cbtdata );
+                               }
+                            });
+                        } else {
                             if (( isChannel || isGroup ) && ( data.channel != 'C04JV1HFK') && ( data.channel != 'G04J6FDDY') && ( data.channel != '')) {
-                                codebaseMessage = "![enter image description here][1] This ticket was [talked about in Slack][2] \n\n " + data.text + "\n\n [1]: https://events.codebasehq.com/upload/71d24d9a-22da-4a45-1cb4-4da98d6b0974/show/original \n\n[2]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
+                                codebaseMessage = slackBot.getUser(data.user).name + " [mentioned this ticket][1] in Slack. \n\n> " + data.text + "\n\n[1]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
                                 cb.tickets.notes.create(queryString.project, {
                                     ticket_id: ticket.ticketId[0]._,
                                     content: codebaseMessage
@@ -176,24 +163,85 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
                                     }
                                 });
                             }
+                            sendSlackTicketNotification( ticket, queryString, channelName, data );
                         }
                     });
-
-                    slattachments = JSON.stringify( slattachments );
-                    //send message to slack
-                    slack.chat.postMessage( { token : creds.slack.authToken, text : "", channel : data.channel, attachments : slattachments, as_user : true }, function( slcherr, slchdata ) {
-                        if ( slcherr ) {
-                            console.log(slchdata);
-                        } else {
-                            outputLog({severity: 'info', source: 'getAndPostTickets', message: 'Sent ticket info to slack', timestamp: new Date(), location: os.hostname() } );
-                        }
-                    });
-
                 }
             }
         });
     });
 }
+
+
+var sendSlackTicketNotification = function( ticket, queryString, channelName, data, ticketNotes ) {
+    var slattachments = [],
+        ticketNoteContent = '',
+        assignee = '';
+
+    assignee = typeof ticket.assignee[0] === 'object' || typeof ticket.assignee[0] === 'undefined' ? 'unassigned' : ticket.assignee[0];
+
+    //if we have ticketNotes then a BIT different format:
+    if ( typeof ticketNotes !== 'undefined' ) {
+        ticketNoteContent = ticketNotes.ticketNotes.ticketNote[0].content[0];
+        //console.log(ticketNotes.ticketNotes.ticketNote[0].content[0]);
+        slattachments.push({
+            "fallback" : "More info from the recent ticket creation in codebase has been posted",
+            "color" : creds.codebaseMap.colors[ticket.ticketType[0]] ? creds.codebaseMap.colors[ticket.ticketType[0]] : creds.codebaseMap.colors.default,
+            "title" : "More details on the ticket just created:",
+            "text" : "*Ticket Type:* _" + ticket.ticketType[0] + "_ *Assigned to:* _" + assignee + "_ \n\n" + ticketNoteContent,
+            "fields" : [
+                {
+                    "title" : "Priority",
+                    "value" : ticket.priority[0].name[0],
+                    "short" : true
+                },
+                {
+                    "title" : "Status",
+                    "value" : ticket.status[0].name[0],
+                    "short" : true
+                },
+                {
+                    "title" : "Milestone",
+                    "value" : ticket.milestone[0].name[0],
+                    "short" : false
+                }
+            ],
+            "mrkdwn_in" : ["text","pretext"]
+        });
+    } else {
+
+        slattachments.push({
+            "fallback": "Ticket " + ticket.ticketId[0]._ + ': ' + ticket.summary[0],
+            "color": creds.codebaseMap.colors[ticket.ticketType[0]] ? creds.codebaseMap.colors[ticket.ticketType[0]] : creds.codebaseMap.colors.default,
+            "title": "Ticket: " + ticket.ticketId[0]._ + " (" + ticket.milestone[0].name[0] + ")",
+            "title_link": creds.codebaseMap.projects[queryString.projectRef].url + '/tickets/' + ticket.ticketId[0]._,
+            "text": "*Ticket Type:* _" + ticket.ticketType[0] + "_ *Assigned to:* _" + assignee + "_ \n" + ticket.summary[0],
+            "fields": [
+                {
+                    "title": "Priority",
+                    "value": ticket.priority[0].name[0],
+                    "short": true
+                },
+                {
+                    "title": "Status",
+                    "value": ticket.status[0].name[0],
+                    "short": true
+                }
+            ],
+            "mrkdwn_in": ["text", "pretext"]
+        });
+    }
+
+    slattachments = JSON.stringify( slattachments );
+    //send message to slack
+    slack.chat.postMessage( { token : creds.slack.authToken, text : "", channel : data.channel, attachments : slattachments, as_user : true }, function( slcherr, slchdata ) {
+        if ( slcherr ) {
+            console.log(slchdata);
+        } else {
+            outputLog({severity: 'info', source: 'getAndPostTickets', message: 'Sent ticket info to slack', timestamp: new Date(), location: os.hostname() } );
+        }
+    });
+};
 
 
 var runGrunt = function( data ) {
