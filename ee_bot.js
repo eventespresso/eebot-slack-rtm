@@ -88,7 +88,8 @@ var TicketInfoToPost = function( data ) {
         //from channel.
 
         ticketProjectRef = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? ticketProjectRef : '';
-        ticketProjectRef = ticketProjectRef === '' && creds.codebaseMap.channels[data.channel] ? creds.codebaseMap.channels[data.channel].projectRef : creds.codebaseMap.channels.default.projectRef;
+        ticketProjectRef = ticketProjectRef === '' && creds.codebaseMap.channels[data.channel] ? creds.codebaseMap.channels[data.channel].projectRef : ticketProjectRef;
+        ticketProjectRef = ticketProjectRef === '' ? creds.codebaseMap.channels.default.projectRef : ticketProjectRef;
         ticketProject = ticketProjectRef !== '' && creds.codebaseMap.projects[ticketProjectRef] ? creds.codebaseMap.projects[ticketProjectRef].projectSlug : channelProject;
 
         //ticketQuery
@@ -209,6 +210,10 @@ var sendSlackTicketNotification = function( ticket, queryString, channelName, da
             "mrkdwn_in" : ["text","pretext"]
         });
     } else {
+
+        if ( ! ticket.ticketId[0]._ ) {
+            return;
+        }
 
         slattachments.push({
             "fallback": "Ticket " + ticket.ticketId[0]._ + ': ' + ticket.summary[0],
