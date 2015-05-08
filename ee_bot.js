@@ -137,7 +137,7 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
                 //the details:
                 if ( cbdata.tickets ) {
                     cbdata.tickets.ticket.forEach( function( ticket ) {
-                        if ( ! ticket.ticketId[0] ) {
+                        if ( ! ticket.ticketId[0]._ ) {
                             return;
                         }
 
