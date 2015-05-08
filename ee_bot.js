@@ -215,10 +215,12 @@ var sendSlackTicketNotification = function( ticket, queryString, channelName, da
             return;
         }
 
+        var milestonename = ! ticket.milestone[0].name ? 'unknown or no milestone' : ticket.milestone[0].name[0];
+
         slattachments.push({
             "fallback": "Ticket " + ticket.ticketId[0]._ + ': ' + ticket.summary[0],
             "color": creds.codebaseMap.colors[ticket.ticketType[0]] ? creds.codebaseMap.colors[ticket.ticketType[0]] : creds.codebaseMap.colors.default,
-            "title": "Ticket: " + ticket.ticketId[0]._ + " (" + ticket.milestone[0].name[0] + ")",
+            "title": "Ticket: " + ticket.ticketId[0]._ + " (" + milestonename + ")",
             "title_link": creds.codebaseMap.projects[queryString.projectRef].url + '/tickets/' + ticket.ticketId[0]._,
             "text": "*Ticket Type:* _" + ticket.ticketType[0] + "_ *Assigned to:* _" + assignee + "_ \n" + ticket.summary[0],
             "fields": [
