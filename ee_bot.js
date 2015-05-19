@@ -152,8 +152,9 @@ var getAndPostTickets = function( ticketQuery, data, isChannel, isGroup ) {
                                }
                             });
                         } else {
+                            var cbuser = slackBot.getUser(data.user) ? slackBot.getUser(data.user).name : data.user;
                             if (( isChannel || isGroup ) && ( data.channel != 'C04JV1HFK') && ( data.channel != 'G04J6FDDY') && ( data.channel != '')) {
-                                codebaseMessage = slackBot.getUser(data.user).name + " [mentioned this ticket][1] in Slack. \n\n> " + data.text + "\n\n[1]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
+                                codebaseMessage = cbuser + " [mentioned this ticket][1] in Slack. \n\n> " + data.text + "\n\n[1]: " + creds.slack.archivesEndpoint + channelName + '/p' + data.ts.replace('.', '');
                                 cb.tickets.notes.create(queryString.project, {
                                     ticket_id: ticket.ticketId[0]._,
                                     content: codebaseMessage
