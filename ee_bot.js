@@ -299,6 +299,8 @@ var runGrunt = function( data ) {
     gruntRun += creds.grunt.command[gruntCommand[1]].params === 4 ? gruntCommand[1] + ':' + gruntCommand[3] : gruntCommand[1];
     cd( path );
 
+    slackBot.sendPM( data.user, "Executing now..." );
+
     exec( gruntRun );
 
     //notify user
